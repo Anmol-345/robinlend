@@ -63,6 +63,9 @@ a:hover { color: var(--brass); }
 
 .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
 .narrow { max-width: 720px; }
+@media (max-width: 760px) {
+  .wrap { padding: 0 16px; }
+}
 
 /* ── header ── */
 header.top {
@@ -77,6 +80,27 @@ header.top {
 nav.links { display: flex; gap: 26px; font-size: 14px; color: var(--ink-2); justify-content: center; }
 nav.links a.on { color: var(--brass); }
 .spacer { flex: 1; }
+
+@media (max-width: 760px) {
+  .top .row { 
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: space-between; 
+    height: auto; 
+    padding: 14px 0; 
+    gap: 16px;
+  }
+  nav.links { 
+    order: 3; 
+    width: 100%; 
+    justify-content: flex-start; 
+    overflow-x: auto; 
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+  nav.links::-webkit-scrollbar { display: none; }
+}
 
 /* ── type ── */
 h1.display { font-family: var(--serif); font-size: 46px; line-height: 1.1; margin: 0 0 14px; font-weight: 400; }
@@ -98,6 +122,9 @@ section.first { padding-top: 60px; }
   padding: 20px;
 }
 .card + .card { margin-top: 14px; }
+@media (max-width: 760px) {
+  .card { padding: 16px; overflow-x: auto; }
+}
 .grid { display: grid; gap: 14px; }
 .grid.two { grid-template-columns: 1fr 1fr; }
 @media (max-width: 760px) { .grid.two { grid-template-columns: 1fr; } }
