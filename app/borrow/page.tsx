@@ -176,7 +176,7 @@ export default function Borrow() {
                 write({ address: BOND, abi: securityAbi, functionName: "approve", args: [MARKET, maxUint256] });
               }}
             >
-              {isPending ? "Approving…" : "Let RobinLend hold your bond"}
+              {isPending ? "Approving…" : "Let Ratehood hold your bond"}
             </button>
           ) : (
             <button

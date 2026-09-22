@@ -1,6 +1,6 @@
-# RobinLend
+# Ratehood
 
-RobinLend is a decentralized, peer-to-peer underwriting market for tokenized securities, built natively on the **Robinhood Chain Testnet**. 
+Ratehood is a decentralized, peer-to-peer underwriting market for tokenized securities, built natively on the **Robinhood Chain Testnet**. 
 
 This repository contains the complete Next.js frontend application. Borrowers can pledge tokenized bonds as collateral to request cash loans, and underwriters can review these requests and provide competitive bids to fund them. 
 
@@ -38,7 +38,7 @@ NEXT_PUBLIC_CASH_ADDRESS=your_cash_token_address
 
 ## Deployment
 
-RobinLend is a standard Next.js application. You can deploy it instantly by importing the repository into **Vercel**. 
+Ratehood is a standard Next.js application. You can deploy it instantly by importing the repository into **Vercel**. 
 
 1. Push this repository to GitHub.
 2. Import the project in your Vercel dashboard.

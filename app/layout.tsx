@@ -26,9 +26,9 @@ const serif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "RobinLend — underwriting market for tokenized securities",
+  title: "Ratehood — underwriting market for tokenized securities",
   description:
-    "Post a tokenized security, publish its offering document, and let underwriters compete to fund you. No price oracle anywhere.",
+    "An underwriting market for tokenized securities, publish its offering document, and let underwriters compete to fund you. No price oracle anywhere.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -42,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="wrap">
               <div className="row">
                 <div>
-                  <span className="mark">RobinLend.</span>
+                  <span className="mark">Ratehood.</span>
                   <span className="built">Built on Robinhood Chain</span>
                 </div>
                 <nav>

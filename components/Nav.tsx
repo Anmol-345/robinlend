@@ -31,7 +31,7 @@ export default function Nav() {
     <header className="top">
       <div className="wrap row">
         <Link href="/" className="mark" style={{ justifySelf: "start" }}>
-          RobinLend<span>.</span>
+          Ratehood<span>.</span>
         </Link>
         <nav className="links">
           {links.map((l) => (
