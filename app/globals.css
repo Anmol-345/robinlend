@@ -1,0 +1,621 @@
+/* Rialto was the banking quarter of Venice: brass, stone, ledger paper. The
+   palette comes from that rather than from the usual dapp neon. */
+:root {
+  /* Two colours. Paper and ink — nothing else in the whole application.
+     Everything that reads as a third tone is ink at reduced opacity, so a
+     surface, a rule and a caption are all the same pigment applied lightly. */
+  --paper: #f4f2ed;
+  --ink: #14130f;
+
+  /* Ink, thinned. Text first, then the marks that structure a page. */
+  --ink-2: rgba(20, 19, 15, 0.74);
+  --muted: rgba(20, 19, 15, 0.62);
+  --line: rgba(20, 19, 15, 0.14);
+  --line-soft: rgba(20, 19, 15, 0.08);
+  --wash: rgba(20, 19, 15, 0.035);
+  --wash-2: rgba(20, 19, 15, 0.06);
+
+  /* Kept as names so nothing has to change at the call sites. They all resolve
+     to the same two colours; state is carried by weight, not by hue. */
+  --void: var(--paper);
+  --ground: var(--paper);
+  --surface: var(--paper);
+  --raised: var(--wash);
+  --brass: var(--ink);
+  --brass-dim: var(--muted);
+  --good: var(--ink);
+  --warn: var(--ink);
+  --bad: var(--ink);
+  --settled: var(--ink);
+  --settled-bg: transparent;
+  --blocked: var(--ink);
+  --blocked-bg: var(--ink);
+  --pending: var(--ink);
+  --pending-bg: transparent;
+  --paper-ink: var(--ink);
+  --paper-line: var(--line);
+  --paper-muted: var(--muted);
+
+  --radius: 4px;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  /* next/font self-hosts the face and hands it over as --font-serif. The
+     literal name is the fallback inside var(), so this resolves to a serif
+     whether the font loads, fails, or is removed from the layout entirely. */
+  --serif: var(--font-serif, "Instrument Serif"), Georgia, "Times New Roman", serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--brass); }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+.narrow { max-width: 720px; }
+
+/* ── header ── */
+header.top {
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+.top .row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 68px; }
+.mark { font-family: var(--serif); font-size: 25px; letter-spacing: 0.01em; }
+.mark span { color: var(--brass); }
+nav.links { display: flex; gap: 26px; font-size: 14px; color: var(--ink-2); justify-content: center; }
+nav.links a.on { color: var(--brass); }
+.spacer { flex: 1; }
+
+/* ── type ── */
+h1.display { font-family: var(--serif); font-size: 46px; line-height: 1.1; margin: 0 0 14px; font-weight: 400; }
+h2.h { font-family: var(--serif); font-size: 27px; font-weight: 400; margin: 0 0 10px; }
+.lede { color: var(--ink-2); font-size: 16px; margin: 0; max-width: 62ch; }
+.eyebrow {
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 10px;
+}
+.sub { color: var(--muted); font-size: 13px; }
+section { padding: 44px 0; }
+section.first { padding-top: 60px; }
+
+/* ── surfaces ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.card + .card { margin-top: 14px; }
+.grid { display: grid; gap: 14px; }
+.grid.two { grid-template-columns: 1fr 1fr; }
+@media (max-width: 760px) { .grid.two { grid-template-columns: 1fr; } }
+
+/* ── data ── */
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.kv { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; font-size: 14px; }
+.kv + .kv { border-top: 1px solid var(--line); }
+.kv .k { color: var(--muted); }
+.kv .v { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; word-break: break-all; }
+
+.pill {
+  display: inline-block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2);
+}
+/* Five states, one pigment. A live loan is filled because it is the only row
+   still moving; a default is dashed because it is a settlement that was
+   interrupted; a cancelled request recedes because nothing happened. */
+.pill.open { border-color: var(--ink); color: var(--ink); }
+.pill.funded { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.pill.repaid { border-color: var(--ink); color: var(--ink-2); }
+.pill.defaulted { border-style: dashed; border-color: var(--ink); color: var(--ink); }
+.pill.cancelled { border-color: var(--line); color: var(--muted); }
+
+/* ── controls ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--ink); color: var(--paper); border: 1px solid var(--ink);
+  padding: 9px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+}
+.btn:hover { opacity: .86; }
+.btn:disabled { opacity: 0.42; cursor: not-allowed; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
+.btn.ghost:hover { background: var(--raised); color: var(--ink); border-color: var(--ink); }
+.btn.small { padding: 6px 12px; font-size: 13px; }
+
+label.field { display: block; margin-bottom: 14px; }
+label.field .name { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.04em; }
+input.text, select.text {
+  width: 100%; background: var(--ground); color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 9px 11px; font-family: var(--mono); font-size: 14px;
+}
+input.text:focus, select.text:focus { outline: none; border-color: var(--brass-dim); }
+.hint { font-size: 12px; color: var(--muted); margin-top: 5px; }
+
+.note { font-size: 13px; color: var(--ink-2); border-left: 2px solid var(--brass-dim); padding-left: 12px; }
+
+/* A compliance obstacle. Warn, not error: nothing has gone wrong and nothing is
+   lost — the settlement is waiting on a permission the issuer controls. */
+.blocked {
+  border-left: 2px solid var(--warn);
+  padding: 2px 0 2px 12px;
+}
+.blocked-title { font-size: 13px; color: var(--warn); margin: 0 0 4px; }
+.blocked-detail { font-size: 13px; color: var(--ink-2); margin: 0; line-height: 1.55; }
+.note .blocked-title { color: var(--muted); }
+.err { color: var(--bad); font-size: 13px; font-family: var(--mono); word-break: break-all; }
+.ok { color: var(--good); }
+
+table.rows { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.rows th {
+  text-align: left; font-weight: 400; font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted); padding: 0 12px 10px 0; border-bottom: 1px solid var(--line);
+}
+table.rows td.fig { text-align: right; font-variant-numeric: tabular-nums; }
+table.rows th.fig { text-align: right; }
+table.rows td { padding: 13px 12px 13px 0; border-bottom: 1px solid var(--line); font-family: var(--mono); font-variant-numeric: tabular-nums; }
+table.rows tr:hover td { background: var(--surface); }
+table.rows td.wide { font-family: var(--sans); }
+
+footer.foot { border-top: 1px solid var(--line); padding: 40px 0 46px; color: var(--muted); font-size: 13px; }
+.foot .row { display: flex; justify-content: space-between; align-items: baseline; gap: 32px; flex-wrap: wrap; }
+.foot .mark { font-family: var(--serif); font-size: 21px; color: var(--ink-2); }
+.foot .built { margin-left: 14px; font-size: 13px; color: var(--muted); }
+.foot nav { display: flex; gap: 26px; flex-wrap: wrap; align-items: baseline; }
+.foot a { color: var(--ink-2); text-decoration: none; }
+.foot a:hover { color: var(--ink); }
+.foot .ver { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+.empty { color: var(--muted); padding: 34px 0; text-align: center; font-size: 14px; }
+
+/* ── the manufactured payment ────────────────────────────────
+   A coupon is a row in a ledger, so it is set as one: the figures line up in a
+   column and the subtraction is visible rather than described. */
+.coupon-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 10px 0; border-bottom: 1px solid var(--line);
+}
+.coupon-row:last-of-type { border-bottom: none; }
+.coupon-id { margin: 0; font-size: 14px; }
+.coupon-meta { margin: 3px 0 0; font-size: 12px; color: var(--muted); font-family: var(--mono); }
+.coupon-act { flex: none; }
+.btn.sm { padding: 5px 11px; font-size: 12px; }
+.tag {
+  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 100px; border: 1px solid var(--line);
+  color: var(--muted); white-space: nowrap;
+}
+.tag.ok { color: var(--good); border-color: rgba(127,168,127,0.4); }
+
+.ledger { border-top: 1px solid var(--line); padding-top: 12px; }
+.ledger-row {
+  display: flex; justify-content: space-between; gap: 18px;
+  font-size: 13px; color: var(--ink-2); padding: 5px 0;
+}
+.ledger-row .figure { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+.ledger-row .figure.minus { color: var(--brass); }
+.ledger-row.total {
+  border-top: 1px solid var(--line); margin-top: 6px; padding-top: 10px; color: var(--ink);
+}
+.ledger-row.total .figure { font-size: 15px; }
+
+/* ─────────────────────────────────────────────────────────────
+   The landing page. Everything below is used only by `/`, so the
+   app pages keep the classes they already have.
+   ───────────────────────────────────────────────────────────── */
+
+.band { padding: 104px 0; border-bottom: 1px solid var(--line); }
+.band.void { background: var(--paper); }
+.band.paper { background: var(--paper); }
+
+
+
+.band.tight { padding: 72px 0; }
+
+.claim {
+  font-family: var(--serif);
+  font-size: clamp(34px, 5.4vw, 62px);
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0 0 20px;
+  text-wrap: balance;
+}
+
+.claim .dim { color: inherit; }
+
+
+.stat-strip { display: flex; flex-wrap: wrap; gap: 0; margin-top: 44px; border-top: 1px solid var(--line); }
+.stat { padding: 18px 30px 16px 0; margin-right: 30px; border-right: 1px solid var(--line); }
+.stat:last-child { border-right: none; }
+.stat b { display: block; font-family: var(--mono); font-size: 27px; color: var(--ink); font-weight: 400; letter-spacing: -0.02em; }
+.stat span { font-family: var(--mono); font-size: 11px; letter-spacing: 0.11em; text-transform: uppercase; color: var(--muted); }
+
+/* A figure the chain produced, shown the way the chain produced it. */
+.readout { font-family: var(--mono); font-size: 13px; line-height: 1.9; color: var(--ink-2); }
+.readout .k { color: var(--muted); }
+.readout .v { color: var(--ink); }
+
+
+
+
+.state { display: inline-block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+         text-transform: uppercase; padding: 3px 8px; border-radius: 2px; border: 1px solid; white-space: nowrap; }
+/* The compliance list is four of these and then one that is not. Without hue
+   the distinction has to be weight: an outline for a call that went through,
+   a solid fill for the one the issuer stopped. */
+.state.settled { color: var(--ink-2); border-color: var(--line); background: transparent; }
+.state.blocked { color: var(--paper); border-color: var(--ink); background: var(--ink); }
+.state.pending { color: var(--ink); border-color: var(--ink); border-style: dashed; background: transparent; }
+
+.figure { border: 1px solid var(--line); border-radius: 3px; background: var(--surface); padding: 26px 26px 20px; margin: 34px 0 0; }
+.band.void .figure { background: var(--wash); }
+.band.paper .figure { background: var(--wash); }
+.figure figcaption { font-size: 14px; color: var(--muted); margin-top: 20px; text-align: center; }
+
+
+/* Sections fade up once, 200ms, and never again. */
+.rise { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
+.rise.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .rise { opacity: 1; transform: none; transition: none; }
+}
+
+/* ── instrument panels, used by /borrow and /mandate ───────────── */
+
+.panel { border: 1px solid var(--line); border-radius: 3px; background: var(--surface); }
+.panel > .head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--wash);
+}
+.panel > .body { padding: 20px; }
+.panel > .body > *:first-child { margin-top: 0; }
+.panel > .body > *:last-child { margin-bottom: 0; }
+
+/* A row of live chain facts, read like a terminal rather than a definition list. */
+.reads { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 3px; }
+.reads > div { background: var(--surface); padding: 13px 16px; display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.reads .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.reads .v { font-family: var(--mono); font-size: 14px; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* Capacity against a ceiling the owner set themselves. Two weights of the same
+   pigment: money out, and money promised. */
+.meter { margin: 4px 0 0; }
+.meter .track { height: 8px; background: var(--wash-2); border: 1px solid var(--line); border-radius: 2px;
+                overflow: hidden; display: flex; }
+.meter .fill { height: 100%; transition: width .5s cubic-bezier(.3,.7,.4,1); }
+.meter .fill.live { background: var(--ink); }
+.meter .fill.held { background: repeating-linear-gradient(135deg, var(--ink) 0 2px, transparent 2px 5px); }
+.meter .legend { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px;
+                 font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--muted); }
+.meter .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 1px; margin-right: 7px;
+                   vertical-align: -1px; border: 1px solid var(--ink); }
+.meter .legend i.held { background: repeating-linear-gradient(135deg, var(--ink) 0 2px, transparent 2px 4px); }
+.meter .legend b { color: var(--ink); font-weight: 400; }
+
+/* What the borrower is proposing, recalculated as they type.
+   A number that changes has to look like it changes, or it reads as a caption. */
+.proposal { display: flex; align-items: center; gap: 22px; border: 1px solid var(--ink);
+            border-radius: 3px; padding: 16px 20px; margin: 20px 0 0; }
+.proposal .big { font-family: var(--mono); font-size: 30px; color: var(--ink); letter-spacing: -.02em;
+                 font-variant-numeric: tabular-nums; line-height: 1; }
+.proposal p { font-size: 13.5px; color: var(--ink-2); margin: 0; }
+.proposal.short { border-color: var(--ink); background: var(--ink); }
+.proposal.short .big, .proposal.short p { color: var(--paper); }
+
+/* A form section: a label above a hairline, then the fields. */
+.fieldset { margin-top: 30px; }
+.fieldset > .lab { display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+                   font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+                   color: var(--muted); padding-bottom: 8px; border-bottom: 1px solid var(--ink); margin-bottom: 20px; }
+.actions { display: flex; justify-content: center; margin-top: 30px; }
+
+/* ── the transaction dialog ─────────────────────────────────────── */
+
+.scrim {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 24px;
+  background: rgba(20, 19, 15, 0.45); backdrop-filter: blur(3px);
+  animation: scrim-in .18s ease;
+}
+@keyframes scrim-in { from { opacity: 0 } to { opacity: 1 } }
+
+.dialog {
+  width: 100%; max-width: 460px; background: var(--paper);
+  border: 1px solid var(--line); border-radius: 4px; overflow: hidden;
+  box-shadow: 0 20px 50px rgba(20, 19, 15, .18);
+  animation: dialog-in .22s cubic-bezier(.2, .7, .3, 1);
+}
+@keyframes dialog-in { from { opacity: 0; transform: translateY(10px) scale(.985) } to { opacity: 1; transform: none } }
+@media (prefers-reduced-motion: reduce) {
+  .scrim, .dialog { animation: none; }
+}
+
+.dialog > header {
+  padding: 16px 22px; border-bottom: 1px solid var(--line); background: var(--wash);
+  display: flex; align-items: center; gap: 12px;
+}
+.dialog > header .t { font-family: var(--mono); font-size: 11px; letter-spacing: .13em;
+                      text-transform: uppercase; color: var(--muted); }
+.dialog > .body { padding: 22px; }
+.dialog h3 { font-family: var(--serif); font-size: 25px; line-height: 1.16; color: var(--ink);
+             margin: 0 0 10px; font-weight: 400; }
+.dialog p { font-size: 15px; color: var(--ink-2); margin: 0 0 12px; }
+.dialog p:last-child { margin-bottom: 0; }
+.dialog .why { border-left: 2px solid var(--line); padding-left: 14px; margin: 16px 0 0; }
+.dialog .why .sel { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; }
+.dialog > footer { padding: 16px 22px; border-top: 1px solid var(--line); display: flex;
+                   justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+/* Two outcomes, told apart by weight rather than hue: a settled transaction
+   gets a hairline, a refused one gets the whole header inverted. */
+.dialog.ok > header { border-bottom-color: var(--ink); }
+.dialog.bad > header { background: var(--ink); border-bottom-color: var(--ink); }
+.dialog.bad > header .t { color: rgba(244,242,237,.6); }
+.dialog.bad > header .state { color: var(--ink); background: var(--paper); border-color: var(--paper); }
+
+/* The mark that lands when it settles. */
+.tick { width: 34px; height: 34px; margin-bottom: 16px; }
+.tick path { stroke: var(--ink); stroke-width: 2.4; fill: none; stroke-linecap: round;
+             stroke-dasharray: 26; stroke-dashoffset: 26; animation: draw .45s ease .1s forwards; }
+.tick.cross path { stroke-dasharray: 20; stroke-dashoffset: 20; }
+@keyframes draw { to { stroke-dashoffset: 0 } }
+@media (prefers-reduced-motion: reduce) { .tick path { animation: none; stroke-dashoffset: 0 } }
+
+/* Three dots, because a spinner implies a progress it does not know. */
+.waiting { display: inline-flex; gap: 4px; align-items: center; }
+.waiting i { width: 5px; height: 5px; border-radius: 50%; background: var(--pending);
+             animation: pulse 1.15s ease-in-out infinite; }
+.waiting i:nth-child(2) { animation-delay: .16s }
+.waiting i:nth-child(3) { animation-delay: .32s }
+@keyframes pulse { 0%, 100% { opacity: .25 } 50% { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .waiting i { animation: none; opacity: .7 } }
+
+@keyframes phase-in { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: none } }
+@media (prefers-reduced-motion: reduce) { @keyframes phase-in { from { opacity: 1 } to { opacity: 1 } } }
+
+/* Figures that sit inside a dark band need their own ground, not the band's. */
+.hero-figure { border: 1px solid var(--line); border-radius: 3px; background: transparent;
+               padding: 24px 22px 16px; margin-top: 46px; }
+
+/* ── /how ───────────────────────────────────────────────────────── */
+
+.steps { counter-reset: st; margin: 30px 0 0; }
+.step { counter-increment: st; display: grid; grid-template-columns: 46px 1fr; gap: 22px;
+        padding: 22px 0; border-top: 1px solid var(--line); }
+
+.step::before { content: counter(st, decimal-leading-zero); font-family: var(--mono); font-size: 12px;
+                color: var(--muted); padding-top: 4px; }
+.step h4 { font-family: var(--serif); font-size: 21px; font-weight: 400; color: var(--ink);
+           margin: 0 0 6px; letter-spacing: -.005em; }
+
+.step p { font-size: 15px; margin: 0 0 8px; color: var(--ink-2); }
+
+.step .call { font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: .02em; }
+.step .who { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+             color: var(--muted); display: block; margin-bottom: 5px; }
+
+/* A calculation, shown rather than described. */
+.working { font-family: var(--mono); font-size: 13px; line-height: 2.1; }
+.working .row { display: flex; justify-content: space-between; gap: 20px;
+                border-bottom: 1px solid var(--line); padding: 4px 0; }
+.band.void .working .row { border-bottom-color: var(--line); }
+.working .row.total { border-bottom: none; border-top: 1px solid var(--ink); margin-top: 6px;
+                      padding-top: 10px; font-size: 15px; }
+.band.void .working .row.total { border-top-color: var(--ink); }
+.working .row span:last-child { font-variant-numeric: tabular-nums; }
+
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin: 26px 0 0; }
+.pair > div { border: 1px solid var(--line); background: var(--surface); padding: 22px 24px; }
+.band.paper .pair > div { background: var(--wash); }
+.pair h4 { font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: .06em;
+           text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.pair p { font-size: 14.5px; margin: 0; }
+
+.nots { margin: 26px 0 0; }
+.nots > div { display: grid; grid-template-columns: 210px 1fr; gap: 24px; padding: 16px 0;
+              border-top: 1px solid var(--line); }
+.nots b { font-family: var(--serif); font-size: 18px; font-weight: 400; color: var(--ink); }
+.nots p { font-size: 14.5px; margin: 0; color: var(--ink-2); }
+
+@media (max-width: 720px) {
+  .pair { grid-template-columns: 1fr }
+  .nots > div { grid-template-columns: 1fr; gap: 6px }
+  .step { grid-template-columns: 32px 1fr; gap: 14px }
+}
+
+/* Text and its figure, side by side, so neither has to be read alone. */
+.beside { display: grid; grid-template-columns: 1fr 1.05fr; gap: 56px; align-items: center; }
+@media (max-width: 860px) { .beside { grid-template-columns: 1fr; gap: 34px } }
+
+/* Three facts, three shapes. Borders removed: what separated them was sameness,
+   and three identical frames is what made the eye skip them. */
+.proofs { display: grid; gap: 0; margin-top: 30px; }
+.proof { padding: 34px 0; border-top: 1px solid var(--line); }
+.proof:first-child { border-top: none; padding-top: 8px; }
+.proof h3 { font-family: var(--sans); font-size: clamp(17px,2vw,20px); font-weight: 600; color: var(--ink);
+            margin: 0 0 20px; letter-spacing: -.008em; max-width: 34ch; }
+.proof .says { font-size: 14.5px; color: var(--muted); margin: 18px 0 0; max-width: 56ch; }
+
+/* the gap that fills */
+.gap .ends { display: flex; justify-content: space-between; gap: 16px; font-family: var(--mono);
+             font-size: 11.5px; color: var(--muted); }
+.gap .ends b { color: var(--ink); font-weight: 400; }
+.gap .bar { height: 2px; background: var(--line); margin: 10px 0 8px; }
+.gap .bar .fill { height: 100%; background: var(--ink); transform-origin: left;
+                  transition: transform 1.5s cubic-bezier(.2,.7,.3,1) .25s; }
+.gap .mid { text-align: center; font-family: var(--mono); font-size: 11px; color: var(--muted); margin: 0; }
+
+/* the stamp that lands */
+.stamp { display: inline-grid; grid-template-columns: auto auto; gap: 4px 16px; align-items: baseline;
+         border: 1px solid var(--ink); padding: 14px 20px; font-family: var(--mono); font-size: 13px;
+         opacity: 0; transform: scale(.985); transition: opacity .5s ease, transform .5s ease; }
+.stamp.in { opacity: 1; transform: none; }
+.stamp .k { color: var(--muted); font-size: 11px; letter-spacing: .06em; }
+.stamp .v { color: var(--ink); }
+
+/* the run of settlements, and the one that stops */
+.runs { display: grid; gap: 4px; max-width: 30ch; }
+.run { display: flex; justify-content: space-between; align-items: center; gap: 18px;
+       padding: 9px 14px; border: 1px solid var(--line); font-family: var(--mono); font-size: 12.5px;
+       transition: opacity .45s ease, transform .45s ease; }
+.run .t { color: var(--muted); }
+.run .w { color: var(--ink); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.run.stopped { background: var(--ink); border-color: var(--ink); margin-top: 6px; }
+.run.stopped .t { color: rgba(244,242,237,.62); }
+.run.stopped .w { color: var(--paper); }
+
+/* ── /how ── one diagram per idea, and a caption ─────────────────── */
+
+.chapter { padding: 78px 0; border-bottom: 1px solid var(--line); }
+.chapter:last-of-type { border-bottom: none; }
+.chapter > .wrap > .num { font-family: var(--mono); font-size: 10.5px; letter-spacing: .22em;
+                          text-transform: uppercase; color: var(--muted); text-align: center; margin: 0 0 14px; }
+.chapter h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(27px,3.6vw,40px);
+              line-height: 1.1; color: var(--ink); text-align: center; margin: 0 auto 12px;
+              max-width: 22ch; text-wrap: balance; }
+.chapter .sub { text-align: center; max-width: 50ch; margin: 0 auto; font-size: 15.5px; }
+
+.plate { border: 1px solid var(--line); border-radius: 3px; padding: 30px 28px 26px; margin-top: 34px; }
+.plate .cap { text-align: center; font-size: 14.5px; color: var(--ink-2); margin: 22px auto 0; max-width: 56ch; }
+.plate .cap strong { color: var(--ink); font-weight: 500; }
+
+/* The Hedera service a section leans on, named where it is used. */
+.service { display: inline-flex; align-items: baseline; gap: 8px; border: 1px solid var(--ink);
+           padding: 5px 11px; border-radius: 2px; font-family: var(--mono); font-size: 11px;
+           letter-spacing: .04em; color: var(--ink); text-decoration: none; }
+.service:hover { background: var(--ink); color: var(--paper); }
+.service .n { opacity: .55; }
+
+.checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px;
+          margin-top: 22px; background: var(--line); border: 1px solid var(--line); }
+.checks a { display: block; background: var(--paper); padding: 13px 16px; text-decoration: none; }
+.checks a:hover { background: var(--wash); }
+.checks .k { display: block; font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em;
+             text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.checks .v { font-size: 13.5px; color: var(--ink); }
+.checks .v::after { content: " ↗"; color: var(--muted); font-size: 10px; }
+
+/* ── the market table ────────────────────────────────────────────── */
+
+/* A row is a link to the loan, so it behaves like one. */
+tr.row { cursor: pointer; transition: background .14s ease; }
+tr.row:hover { background: var(--wash); }
+tr.row td:first-child { position: relative; }
+tr.row:hover td:first-child::before {
+  content: ""; position: absolute; left: -1px; top: 8px; bottom: 8px; width: 2px; background: var(--ink);
+}
+tr.row .go { opacity: 0; transition: opacity .14s ease; color: var(--muted); font-size: 11px; margin-left: 8px; }
+tr.row:hover .go { opacity: 1; }
+
+.copy { display: inline-flex; align-items: baseline; gap: 8px; background: none; border: none;
+        padding: 2px 0; margin: 0; cursor: pointer; font: inherit; color: var(--muted); }
+.copy .mono { font-family: var(--mono); font-size: 12.5px; }
+.copy .mark { font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase;
+              opacity: 0; transition: opacity .14s ease; }
+.copy:hover { color: var(--ink); }
+.copy:hover .mark, .copy:focus-visible .mark { opacity: .6; }
+
+/* A strip of figures read off the contract, above the table. */
+.tally { display: flex; flex-wrap: wrap; gap: 0; margin: 34px 0 0; border-top: 1px solid var(--line);
+         border-bottom: 1px solid var(--line); }
+.tally > div { padding: 16px 34px 14px 0; margin-right: 34px; border-right: 1px solid var(--line); }
+.tally > div:last-child { border-right: none; margin-right: 0; padding-right: 0; }
+.tally b { display: block; font-family: var(--mono); font-size: 23px; font-weight: 400; color: var(--ink);
+           letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.tally span { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+              color: var(--muted); }
+
+/* The prospectus, folded away. It is the document with no price — the reason
+   the project exists — so it stays on the page, but a wall of legal text
+   should not be the first thing in a card about verification. */
+.doc > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: baseline; gap: 10px;
+                 font-size: 13.5px; color: var(--ink); border-bottom: 1px solid var(--line);
+                 padding-bottom: 2px; }
+.doc > summary::-webkit-details-marker { display: none; }
+.doc > summary::before { content: "+"; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.doc[open] > summary::before { content: "–"; }
+.doc > summary:hover { border-bottom-color: var(--ink); }
+.doc > summary .n { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+/* ── keyboard ────────────────────────────────────────────────────
+   One rule, everywhere. A judge will tab through this. */
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 2px; }
+a:focus-visible, button:focus-visible, input:focus-visible,
+summary:focus-visible, tr:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+tr.row:focus-visible { outline-offset: -2px; }
+
+/* ── waiting ─────────────────────────────────────────────────────
+   The row count is one cheap call, so the table can be its full height
+   before a single figure has arrived. Rows then fill in place: no reflow,
+   and a staggered fill reads as data arriving rather than as jank. */
+.skel { display: inline-block; height: 1em; vertical-align: -.12em; border-radius: 2px;
+        background: linear-gradient(90deg, var(--wash) 0%, var(--wash-2) 50%, var(--wash) 100%);
+        background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+@keyframes shimmer { to { background-position: -200% 0 } }
+@media (prefers-reduced-motion: reduce) { .skel { animation: none } }
+
+/* ── live ────────────────────────────────────────────────────────
+   Evidence the figures came from somewhere, put beside the figures. */
+.live { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono);
+        font-size: 11px; letter-spacing: .04em; color: var(--muted); }
+.live .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink);
+             animation: beat 2.4s ease-in-out infinite; }
+@keyframes beat { 0%, 100% { opacity: .25 } 50% { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .live .dot { animation: none; opacity: .7 } }
+.live a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+.live a:hover { color: var(--ink); }
+
+/* An address you can take with you, and can see that you can. */
+.copy .mark { opacity: .34; }
+.copy:hover .mark, .copy:focus-visible .mark { opacity: .85; }
+.copy.done .mono { color: var(--ink); }
+
+/* ── the hero receipt ────────────────────────────────────────────
+   A loan written the way a receipt is. Legible frozen, which is the test —
+   a still frame is what ends up in a deck. */
+.receipt { border: 1px solid var(--line); border-radius: 3px; max-width: 420px; }
+.receipt .head { display: flex; justify-content: space-between; align-items: baseline; gap: 14px;
+                 padding: 11px 20px; border-bottom: 1px solid var(--line); background: var(--wash);
+                 font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+                 text-transform: uppercase; color: var(--muted); }
+.receipt .line, .receipt .total {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 20px;
+  padding: 13px 20px; border-bottom: 1px solid var(--line-soft);
+  transition: opacity .45s ease, transform .45s ease;
+}
+.receipt .line .k { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+.receipt .line .v { font-family: var(--mono); font-size: 18px; color: var(--ink);
+                    font-variant-numeric: tabular-nums; white-space: nowrap; }
+.receipt .line .v i { font-style: normal; font-size: 11px; color: var(--muted); margin-left: 3px; }
+.receipt .total { border-bottom: none; border-top: 1px solid var(--ink); background: var(--wash);
+                  padding: 15px 20px; transition: opacity .6s ease .15s; }
+.receipt .total .k { font-family: var(--sans); font-size: 16px; font-weight: 500; color: var(--ink); }
+.receipt .total .v { font-family: var(--mono); font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+
+/* Hero: the claim and the proof of it, side by side, so the first screen is
+   not a headline over an expanse of nothing. */
+.hero { display: grid; grid-template-columns: 1fr auto; gap: 72px; align-items: center; }
+@media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: 40px } }
+
+/* A unit chosen rather than assumed.
+   Sits in the right of a fieldset label, where the cover ratio sits on the one
+   above it — so the eye already goes there. Ink and paper only: the chosen one
+   is filled, the other is just text. */
+.units { display: inline-flex; gap: 3px; }
+.units button { font: inherit; font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+                text-transform: uppercase; background: none; border: 1px solid transparent;
+                border-radius: 3px; padding: 2px 8px; color: var(--muted); cursor: pointer; }
+.units button:hover { color: var(--ink); }
+.units button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
