@@ -1,0 +1,174 @@
+"use client";
+
+import { useEffect } from "react";
+import { useWaitForTransactionReceipt } from "wagmi";
+import { useQueryClient } from "@tanstack/react-query";
+import type { Hex } from "viem";
+import { explainRevert, isRejection } from "@/lib/reverts";
+
+/**
+ * What happened to the transaction, said out loud.
+ *
+ * Three things this is careful about.
+ *
+ * A receipt arriving is not success — a revert produces one too, and the agent
+ * shipped with exactly that bug once. Nothing here says settled until the
+ * receipt says `success`.
+ *
+ * A custom error reaches the browser as four bytes. Showing `0x8814cafb` is
+ * showing the user the work rather than the answer, so it is decoded, and the
+ * selector kept in small type for anyone reading a receipt later.
+ *
+ * And declining in a wallet is not a failure. It closes quietly.
+ *
+ * It also owns the moment the rest of the page is allowed to believe something
+ * changed. A wallet returns a hash the instant it signs, several seconds before
+ * the network has agreed to anything — so the callers that refetched on that
+ * were re-reading the state the transaction had not yet altered, and a repaid
+ * loan went on saying "Funded" until somebody reloaded. This is the one place
+ * that knows a receipt arrived and that it succeeded, so this is where the
+ * reads are dropped.
+ */
+export default function TxDialog({
+  hash,
+  error,
+  action,
+  done,
+  onClose,
+}: {
+  hash?: Hex;
+  error?: Error | null;
+  /** What the user asked for — "Open the request", "Repay". */
+  action: string;
+  /** What is true now that it worked. One sentence. */
+  done?: string;
+  onClose?: () => void;
+}) {
+  const { data: receipt, isLoading } = useWaitForTransactionReceipt({ hash });
+  const queryClient = useQueryClient();
+
+  // Every contract read on the page, refetched once — and only once the network
+  // has actually accepted the transaction. A revert changes nothing, so it is
+  // deliberately not a trigger.
+  const confirmed = receipt?.status === "success" ? receipt.transactionHash : undefined;
+  useEffect(() => {
+    if (!confirmed) return;
+    queryClient.invalidateQueries({ queryKey: ["readContract"] });
+    queryClient.invalidateQueries({ queryKey: ["readContracts"] });
+  }, [confirmed, queryClient]);
+
+  const rejected = isRejection(error);
+  const open = !!hash || (!!error && !rejected);
+
+  // Escape closes, but only once the outcome is known — dismissing a pending
+  // transaction would suggest it had been called off, and it has not been.
+  const settled = !!error || (!!receipt && !isLoading);
+  useEffect(() => {
+    if (!open || !settled || !onClose) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, settled, onClose]);
+
+  if (!open) return null;
+
+  const reverted = receipt?.status === "reverted";
+  const failed = !!error || reverted;
+  const why = explainRevert(error) ?? (reverted ? explainRevert(receipt) : null);
+
+  const tone = failed ? "bad" : receipt ? "ok" : "";
+  const label = failed ? "Refused" : receipt ? "Settled" : "Sent";
+
+  return (
+    <div
+      className="scrim"
+      onClick={() => settled && onClose?.()}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${action} — ${label}`}
+    >
+      <div className={`dialog ${tone}`} onClick={(e) => e.stopPropagation()}>
+        <header>
+          <span className="t">{action}</span>
+          <span style={{ marginLeft: "auto" }}>
+            {failed ? (
+              <span className="state blocked">refused</span>
+            ) : receipt ? (
+              <span className="state settled">settled</span>
+            ) : (
+              <span className="state pending">awaiting consensus</span>
+            )}
+          </span>
+        </header>
+
+        <div className="body">
+          {!failed && !receipt && (
+            <>
+              <h3>Sent to the network.</h3>
+              <p>
+                Hedera reaches consensus in a few seconds. Nothing is certain until it does, so this will
+                not say settled before then.
+              </p>
+              <p className="waiting" aria-hidden="true"><i /><i /><i /></p>
+            </>
+          )}
+
+          {receipt && !reverted && (
+            <>
+              <svg className="tick" viewBox="0 0 34 34" aria-hidden="true">
+                <path d="M7 18 L14 25 L27 10" />
+              </svg>
+              <h3>Done.</h3>
+              <p>{done ?? "The transaction settled on Hedera."}</p>
+            </>
+          )}
+
+          {failed && (
+            <>
+              <svg className="tick cross" viewBox="0 0 34 34" aria-hidden="true">
+                <path d="M10 10 L24 24" />
+                <path d="M24 10 L10 24" />
+              </svg>
+              <h3>{why ? why.says : "The network refused this."}</h3>
+              {why?.fix && <p>{why.fix}</p>}
+              {!why && (
+                <p>
+                  {trim(error?.message ?? "It reverted on chain, and gave no reason this interface knows how to read.")}
+                </p>
+              )}
+              {why && (
+                <div className="why">
+                  <span className="sel">{why.name} · reverted on chain</span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <footer>
+          {hash ? (
+            <a
+              href={`https://explorer.testnet.chain.robinhood.com/tx/${hash}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ fontFamily: "var(--mono)", fontSize: 12 }}
+            >
+              View on Explorer ↗
+            </a>
+          ) : (
+            <span />
+          )}
+          <button className="btn ghost sm" onClick={() => onClose?.()} disabled={!settled}>
+            {settled ? "Close" : "Waiting…"}
+          </button>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+/** A wallet error arrives with a wall of context. The first line is the useful part. */
+function trim(m: string): string {
+  const line = m.split("\n").find((l) => l.trim().length > 0) ?? m;
+  return line.length > 220 ? `${line.slice(0, 220)}…` : line;
+}
