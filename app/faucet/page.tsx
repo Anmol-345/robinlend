@@ -26,9 +26,9 @@ export default function Faucet() {
   const [action, setAction] = useState<{ label: string; done: string }>({ label: "", done: "" });
 
   const watchAsset = async (tokenAddress: string, symbol: string, decimals: number) => {
-    if (typeof window !== "undefined" && window.ethereum) {
+    if (typeof window !== "undefined" && (window as any).ethereum) {
       try {
-        await window.ethereum.request({
+        await (window as any).ethereum.request({
           method: "wallet_watchAsset",
           params: { type: "ERC20", options: { address: tokenAddress, symbol, decimals } },
         });
